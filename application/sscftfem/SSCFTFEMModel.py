@@ -152,7 +152,7 @@ class SSCFTFEMModel():
         self.rho[1][:] = 1.0 - self.rho[0]
 
         self.data ={
-                'node':self.mesh.mesh.node, 
+                'node':self.mesh.mesh.point, 
                 'elem':self.mesh.mesh.ds.cell+1, 
                 'rhoA':[self.rho[0]],
                 'rhoB':[self.rho[1]],
@@ -186,8 +186,8 @@ class SSCFTFEMModel():
         self.solver.run(self.timeline1, self.q1[:, 0:n1], F1)
         self.solver.run(self.timeline0, self.q1[:, n1-1:], F0)
 
-        print(self.q0[:, -1])
-        print(self.q1[:, -1])
+       # print(self.q0[:, -1])
+       # print(self.q1[:, -1])
 
     def integral_time(self, q, dt):
         f = -0.625*(q[:, 0] + q[:, -1]) + 1/6*(q[:, 1] + q[:, -2]) - 1/24*(q[:, 2] + q[:, -3])
@@ -257,6 +257,8 @@ class SSCFTFEMModel():
         
         if file_path is not None:
             f = open(file_path + '/log.txt', 'w')
+        import time
+        start = time.clock()
         while (self.res > option.tol) and (iteration < option.maxit):
             self.H, self.res = self.one_step()
             self.ediff = self.H - self.Hold
@@ -269,7 +271,11 @@ class SSCFTFEMModel():
                 f.write(string)
 
             print('Iter:',iteration,'======>','res:', self.res, 'ediff:',self.ediff, 'H:', self.H)
+            end = time.clock
+            Timecost = "Time cost is %.6f seconds\n" % (end - start)
+            print(Timecost)
             print('\n')
+            start = end
 
             self.data['rhoA'].append(self.rho[0])
             self.data['rhoB'].append(self.rho[1])
@@ -314,14 +320,14 @@ class SSCFTFEMModel():
     def show_solution(self, i):
         mesh = self.mesh.mesh
         cell = mesh.ds.cell
-        node = mesh.node
+        point = mesh.point
         c = self.rho[0].view(np.ndarray)
         c = np.sum(c[cell], axis=1)/3
         c = cs.val_to_color(c)
         fig = FF.create_trisurf(
-                x = node[:, 0], 
-                y = node[:, 1],
-                z = node[:, 2],
+                x = point[:, 0], 
+                y = point[:, 1],
+                z = point[:, 2],
                 show_colorbar = True,
                 plot_edges=False,
                 simplices=cell)
